@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AST</title>
+<style>body{margin:0}text{font:12px monospace}circle{cursor:pointer}path{fill:none;stroke:#999}</style>
+<svg id="s" width="100%" height="100vh"></svg>
+<script>__D3__</script>
+<script>
+const root = d3.hierarchy(__AST__);
+root.each(d => { if (d.depth >= 3 && d.children) { d._children = d.children; d.children = null; } });
+const layout = d3.tree().nodeSize([20, 190]);
+const g = d3.select("#s").append("g").attr("transform", "translate(40,300)");
+d3.select("#s").call(d3.zoom().on("zoom", e => g.attr("transform", e.transform)));
+function draw() {
+  layout(root);
+  g.selectAll("*").remove();
+  g.selectAll("path").data(root.links()).join("path")
+    .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+  const n = g.selectAll("g").data(root.descendants()).join("g")
+    .attr("transform", d => `translate(${d.y},${d.x})`);
+  n.append("circle").attr("r", 5)
+    .attr("fill", d => d._children ? "black" : "white").attr("stroke", "black")
+    .on("click", (e, d) => {
+      if (d.children) { d._children = d.children; d.children = null; }
+      else { d.children = d._children; d._children = null; }
+      draw();
+    });
+  n.append("text").attr("x", 9).attr("dy", "0.32em").text(d => d.data.name);
+}
+draw();
+</script>
